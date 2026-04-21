@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { DIFFICULTY } from '../constants/difficulty';
 
-export default function HomeScreen({ onPlay }) {
+export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleSfx, onToggleMusic }) {
   const [selected, setSelected] = useState('medium');
   const diff = DIFFICULTY[selected];
 
@@ -65,6 +65,27 @@ export default function HomeScreen({ onPlay }) {
           <Text style={styles.survivalBtnTitle}>⚡ Survival Mode</Text>
           <Text style={styles.survivalBtnSub}>Solve words to add time · wrong taps cost 2s</Text>
         </TouchableOpacity>
+
+        <View style={styles.settingsRow}>
+          <TouchableOpacity
+            style={[styles.settingsBtn, sfxEnabled && styles.settingsBtnActive]}
+            onPress={onToggleSfx}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.settingsBtnText, sfxEnabled && styles.settingsBtnTextActive]}>
+              SFX {sfxEnabled ? 'ON' : 'OFF'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.settingsBtn, musicEnabled && styles.settingsBtnActive]}
+            onPress={onToggleMusic}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.settingsBtnText, musicEnabled && styles.settingsBtnTextActive]}>
+              Music {musicEnabled ? 'ON' : 'OFF'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -222,5 +243,31 @@ const styles = StyleSheet.create({
     color: '#a5b4fc',
     fontSize: 12,
     marginTop: 4,
+  },
+  settingsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  settingsBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#4b4b70',
+    backgroundColor: 'transparent',
+  },
+  settingsBtnActive: {
+    borderColor: '#6366f1',
+    backgroundColor: '#1e1e4a',
+  },
+  settingsBtnText: {
+    color: '#4b4b70',
+    fontSize: 13,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  settingsBtnTextActive: {
+    color: '#a5b4fc',
   },
 });

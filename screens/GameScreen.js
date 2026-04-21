@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Animated } from 'react-native';
 import FloatingWord from '../components/FloatingWord';
+import { playSound, startMusic, stopMusic } from '../utils/audio';
 import { fetchSynonyms } from '../utils/datamuse';
 import { nextWord } from '../utils/wordQueue';
 import { DISTRACTOR_WORDS } from '../constants/wordList';
@@ -79,12 +80,16 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
 
   useEffect(() => {
     loadGame();
+    startMusic();
+    return () => { stopMusic(); };
   }, []);
 
   useEffect(() => {
     if (loading || done || countdown !== null) return;
     if (timeLeft === 0) {
       setDone(true);
+      stopMusic();
+      playSound('fail');
       onGameEnd({ ...buildResult(), allFound: false });
       return;
     }
@@ -94,6 +99,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
 
   useEffect(() => {
     if (countdown === null) return;
+    if (countdown > 0) playSound('tick');
     countdownScale.setValue(0.4);
     countdownOpacity.setValue(0);
     Animated.parallel([
@@ -165,12 +171,15 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     if (!allFound) return;
 
     if (isSurvival) {
+      playSound('success');
       setTimeLeft(t => t + 25);
       setWordsSolved(n => n + 1);
       setLoading(true);
       loadGame(false);
     } else {
       setDone(true);
+      stopMusic();
+      playSound('success');
       onGameEnd({ ...buildResult(), allFound: true });
     }
   }, [words]);
@@ -200,6 +209,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
       const delta = target.isSynonym ? 10 : -wrongPenaltyRef.current;
       const pid = popupCounter.current++;
       setScorePopups(prev => [...prev, { id: pid, value: delta }]);
+      playSound(target.isSynonym ? 'correct' : 'wrong');
     }
   }, [isSurvival]);
 
@@ -213,6 +223,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     if (unfound.length === 0) return;
     const target = unfound[Math.floor(Math.random() * unfound.length)];
     onUseHint();
+    playSound('hint');
     setHighlightedId(target.id);
     setTimeout(() => setHighlightedId(null), 2000);
   }
