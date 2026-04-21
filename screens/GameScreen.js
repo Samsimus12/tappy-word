@@ -14,7 +14,7 @@ const FOOTER_H = 20;
 const WORD_AREA_H = SH - HEADER_H - FOOTER_H;
 const WORD_BOUNDS = { width: SW, height: WORD_AREA_H };
 
-const SURVIVAL_START_TIME = 60;
+const SURVIVAL_START_TIME = 30;
 
 function ScorePopup({ id, value, onComplete }) {
   const translateY = useRef(new Animated.Value(0)).current;
@@ -51,7 +51,7 @@ function ScorePopup({ id, value, onComplete }) {
   );
 }
 
-export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints }) {
+export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints, onResetHints }) {
   const config = DIFFICULTY[difficulty] ?? DIFFICULTY.medium;
   const isSurvival = mode === 'survival';
 
@@ -81,15 +81,14 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   useEffect(() => {
     loadGame();
     startMusic();
-    return () => { stopMusic(); };
   }, []);
 
   useEffect(() => {
     if (loading || done || countdown !== null) return;
     if (timeLeft === 0) {
       setDone(true);
-      stopMusic();
       playSound('fail');
+      stopMusic();
       onGameEnd({ ...buildResult(), allFound: false });
       return;
     }
@@ -178,7 +177,6 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
       loadGame(false);
     } else {
       setDone(true);
-      stopMusic();
       playSound('success');
       onGameEnd({ ...buildResult(), allFound: true });
     }
@@ -203,7 +201,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     });
 
     if (newScore !== null) setRoundScore(newScore);
-    if (isSurvival && isWrong) setTimeLeft(t => Math.max(0, t - 2));
+    if (isSurvival && isWrong) setTimeLeft(t => Math.max(0, t - 5));
 
     if (target && !target.tapped) {
       const delta = target.isSynonym ? 10 : -wrongPenaltyRef.current;
@@ -274,7 +272,8 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
           <Text style={[styles.statValue, { color: timerColor }]}>{timeLeft}</Text>
           <TouchableOpacity
             onPress={handleHint}
-            disabled={hints <= 0 || done}
+            onLongPress={onResetHints}
+            disabled={done}
             style={[styles.hintBtn, (hints <= 0 || done) && styles.hintBtnDisabled]}
             hitSlop={8}
           >

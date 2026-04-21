@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import HomeScreen from './screens/HomeScreen';
 import GameScreen from './screens/GameScreen';
@@ -8,24 +8,40 @@ import { buildWordPool } from './utils/wordPool';
 import { initQueue } from './utils/wordQueue';
 import { loadHints, saveHints } from './utils/hintStorage';
 import { loadSettings, saveSettings } from './utils/settingsStorage';
-import { initAudio, setSfxEnabled, setMusicEnabled } from './utils/audio';
+import { initAudio, setSfxEnabled, setMusicEnabled, startMenuMusic, stopMenuMusic, startMusic, stopMusic } from './utils/audio';
 
 export default function App() {
   const [hints, setHints] = useState(0);
   const [sfxEnabled, setSfx] = useState(true);
   const [musicEnabled, setMusic] = useState(true);
+  const audioReady = useRef(false);
+  const [screen, setScreen] = useState('home');
 
   useEffect(() => {
     buildWordPool().then(initQueue).catch(() => {});
     loadHints().then(setHints).catch(() => {});
-    initAudio().catch(() => {});
-    loadSettings().then(s => {
-      setSfx(s.sfxEnabled);
-      setMusic(s.musicEnabled);
-      setSfxEnabled(s.sfxEnabled);
-      setMusicEnabled(s.musicEnabled);
+    initAudio().then(() => {
+      loadSettings().then(s => {
+        setSfx(s.sfxEnabled);
+        setMusic(s.musicEnabled);
+        setSfxEnabled(s.sfxEnabled);
+        setMusicEnabled(s.musicEnabled);
+        audioReady.current = true;
+        if (s.musicEnabled) startMenuMusic();
+      }).catch(() => {});
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!audioReady.current) return;
+    if (screen === 'home') {
+      stopMusic().then(() => startMenuMusic());
+    } else if (screen === 'game') {
+      stopMenuMusic();
+    } else if (screen === 'results') {
+      stopMusic();
+    }
+  }, [screen]);
 
   function handleToggleSfx() {
     const next = !sfxEnabled;
@@ -38,6 +54,13 @@ export default function App() {
     const next = !musicEnabled;
     setMusic(next);
     setMusicEnabled(next);
+    if (!next) {
+      stopMusic();
+      stopMenuMusic();
+    } else {
+      if (screen === 'home') startMenuMusic();
+      else if (screen === 'game') startMusic();
+    }
     saveSettings({ sfxEnabled, musicEnabled: next }).catch(() => {});
   }
 
@@ -53,7 +76,11 @@ export default function App() {
     saveHints(next).catch(() => {});
   }
 
-  const [screen, setScreen] = useState('home');
+  function handleResetHints() {
+    setHints(10);
+    saveHints(10).catch(() => {});
+  }
+
   const [round, setRound] = useState(1);
   const [totalScore, setTotalScore] = useState(0);
   const [lastResult, setLastResult] = useState(null);
@@ -115,6 +142,7 @@ export default function App() {
           hints={hints}
           onUseHint={handleUseHint}
           onEarnHints={handleEarnHints}
+          onResetHints={handleResetHints}
         />
       )}
       {screen === 'round-complete' && (

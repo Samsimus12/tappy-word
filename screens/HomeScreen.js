@@ -1,6 +1,79 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, Animated, Easing } from 'react-native';
 import { DIFFICULTY } from '../constants/difficulty';
+
+const { width: SW, height: SH } = Dimensions.get('window');
+
+const BG_WORDS = [
+  'swift', 'happy', 'brave', 'clever', 'vivid', 'ardent', 'nimble', 'serene',
+  'astute', 'mellow', 'candid', 'tender', 'bright', 'rapid', 'placid', 'bold',
+  'keen', 'witty', 'calm', 'sharp', 'joyful', 'brisk', 'agile', 'fierce',
+  'graceful', 'radiant', 'daring', 'tranquil', 'lively', 'gentle', 'cunning',
+  'fearless', 'cheerful', 'subtle', 'valiant', 'sprightly', 'luminous', 'zeal',
+  'elated', 'stoic', 'vibrant',
+];
+
+function BgWord({ word, x, y, fontSize, opacity }) {
+  const driftY = useRef(new Animated.Value(0)).current;
+  const driftX = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    let active = true;
+    const easing = Easing.inOut(Easing.quad);
+
+    const drift = (value, range) => {
+      if (!active) return;
+      Animated.timing(value, {
+        toValue: (Math.random() - 0.5) * range,
+        duration: 900 + Math.random() * 900,
+        easing,
+        useNativeDriver: true,
+      }).start(({ finished }) => { if (finished) drift(value, range); });
+    };
+
+    drift(driftX, 40);
+    drift(driftY, 50);
+
+    return () => { active = false; };
+  }, []);
+
+  return (
+    <Animated.Text
+      style={{
+        position: 'absolute',
+        left: x,
+        top: y,
+        color: '#a5b4fc',
+        opacity,
+        fontSize,
+        fontWeight: '700',
+        transform: [{ translateX: driftX }, { translateY: driftY }],
+      }}
+    >
+      {word}
+    </Animated.Text>
+  );
+}
+
+function FloatingBackground() {
+  const items = useRef(
+    BG_WORDS.map(word => ({
+      word,
+      x: Math.random() * (SW - 100),
+      y: Math.random() * (SH - 40),
+      fontSize: 13 + Math.random() * 10,
+      opacity: 0.05 + Math.random() * 0.07,
+    }))
+  ).current;
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {items.map((item, i) => (
+        <BgWord key={i} {...item} />
+      ))}
+    </View>
+  );
+}
 
 export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleSfx, onToggleMusic }) {
   const [selected, setSelected] = useState('medium');
@@ -8,17 +81,10 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <FloatingBackground />
+      <View style={styles.content}>
         <Text style={styles.title}>Tappy{'\n'}Word</Text>
         <Text style={styles.subtitle}>How many synonyms can you find?</Text>
-
-        <View style={styles.rulesBox}>
-          <Rule emoji="🎯" text="A target word appears at the top" />
-          <Rule emoji="👆" text="Tap every synonym floating on screen" />
-          <Rule emoji="✅" text="+10 points for each correct synonym" />
-          <Rule emoji="❌" text="-2 points for wrong taps" />
-          <Rule emoji="⏱️" text="Find them all to advance to the next round" />
-        </View>
 
         <Text style={styles.diffLabel}>Difficulty</Text>
         <View style={styles.diffRow}>
@@ -63,7 +129,7 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
           activeOpacity={0.85}
         >
           <Text style={styles.survivalBtnTitle}>⚡ Survival Mode</Text>
-          <Text style={styles.survivalBtnSub}>Solve words to add time · wrong taps cost 2s</Text>
+          <Text style={styles.survivalBtnSub}>Solve words to add time · wrong taps cost 5s</Text>
         </TouchableOpacity>
 
         <View style={styles.settingsRow}>
@@ -86,17 +152,8 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
             </Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
-  );
-}
-
-function Rule({ emoji, text }) {
-  return (
-    <View style={styles.ruleRow}>
-      <Text style={styles.ruleEmoji}>{emoji}</Text>
-      <Text style={styles.ruleText}>{text}</Text>
-    </View>
   );
 }
 
@@ -106,11 +163,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f2e',
   },
   content: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingTop: 48,
-    paddingBottom: 40,
   },
   title: {
     fontSize: 52,
@@ -125,31 +181,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#a5b4fc',
     textAlign: 'center',
-    marginBottom: 36,
-  },
-  rulesBox: {
-    width: '100%',
-    backgroundColor: '#1e1e4a',
-    borderRadius: 18,
-    padding: 20,
-    marginBottom: 28,
-    gap: 14,
-  },
-  ruleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  ruleEmoji: {
-    fontSize: 20,
-    width: 26,
-    textAlign: 'center',
-  },
-  ruleText: {
-    color: '#e0e7ff',
-    fontSize: 14,
-    flex: 1,
-    lineHeight: 20,
+    marginBottom: 40,
   },
   diffLabel: {
     color: '#a5b4fc',
@@ -163,6 +195,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     marginBottom: 28,
+    width: '100%',
   },
   diffBtn: {
     flex: 1,
@@ -247,7 +280,7 @@ const styles = StyleSheet.create({
   settingsRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 20,
+    marginTop: 24,
   },
   settingsBtn: {
     paddingVertical: 8,
