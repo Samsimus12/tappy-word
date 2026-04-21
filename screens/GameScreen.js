@@ -15,6 +15,41 @@ const WORD_BOUNDS = { width: SW, height: WORD_AREA_H };
 
 const SURVIVAL_START_TIME = 60;
 
+function ScorePopup({ id, value, onComplete }) {
+  const translateY = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  const x = useRef(SW * 0.25 + Math.random() * SW * 0.5).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(translateY, { toValue: -80, duration: 900, useNativeDriver: true }),
+      Animated.sequence([
+        Animated.delay(400),
+        Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }),
+      ]),
+    ]).start(() => onComplete(id));
+  }, []);
+
+  const isPositive = value > 0;
+  return (
+    <Animated.Text
+      pointerEvents="none"
+      style={{
+        position: 'absolute',
+        bottom: 60,
+        left: x,
+        color: isPositive ? '#22c55e' : '#ef4444',
+        fontSize: 22,
+        fontWeight: '800',
+        opacity,
+        transform: [{ translateY }],
+      }}
+    >
+      {isPositive ? `+${value}` : value}
+    </Animated.Text>
+  );
+}
+
 export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints }) {
   const config = DIFFICULTY[difficulty] ?? DIFFICULTY.medium;
   const isSurvival = mode === 'survival';
@@ -30,9 +65,13 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   const [wordsSolved, setWordsSolved] = useState(0);
   const [countdown, setCountdown] = useState(null);
 
+  const [scorePopups, setScorePopups] = useState([]);
+  const popupCounter = useRef(0);
+
   const wordsRef = useRef([]);
   const roundScoreRef = useRef(0);
   const targetWordRef = useRef('');
+  const wrongPenaltyRef = useRef(config.wrongPenalty);
   const countdownScale = useRef(new Animated.Value(1)).current;
   const countdownOpacity = useRef(new Animated.Value(0)).current;
 
@@ -145,7 +184,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
       const updated = prev.map(w => {
         if (w.id !== wordId || w.tapped) return w;
         const correct = w.isSynonym;
-        const next = Math.max(0, roundScoreRef.current + (correct ? 10 : -2));
+        const next = Math.max(0, roundScoreRef.current + (correct ? 10 : -wrongPenaltyRef.current));
         roundScoreRef.current = next;
         newScore = next;
         return { ...w, tapped: true, correct };
@@ -156,7 +195,17 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
 
     if (newScore !== null) setRoundScore(newScore);
     if (isSurvival && isWrong) setTimeLeft(t => Math.max(0, t - 2));
+
+    if (target && !target.tapped) {
+      const delta = target.isSynonym ? 10 : -wrongPenaltyRef.current;
+      const pid = popupCounter.current++;
+      setScorePopups(prev => [...prev, { id: pid, value: delta }]);
+    }
   }, [isSurvival]);
+
+  const removePopup = useCallback((id) => {
+    setScorePopups(prev => prev.filter(p => p.id !== id));
+  }, []);
 
   function handleHint() {
     if (hints <= 0 || done) return;
@@ -223,7 +272,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
         </View>
       </View>
 
-      <View style={styles.wordArea}>
+      <View style={styles.wordArea} pointerEvents="box-none">
         {words.map(w => (
           <FloatingWord
             key={w.id}
@@ -250,6 +299,12 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
             </Animated.Text>
           </View>
         )}
+      </View>
+
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        {scorePopups.map(p => (
+          <ScorePopup key={p.id} id={p.id} value={p.value} onComplete={removePopup} />
+        ))}
       </View>
     </SafeAreaView>
   );
