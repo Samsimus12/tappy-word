@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Animated } from 'react-native';
 import FloatingWord from '../components/FloatingWord';
 import { fetchSynonyms } from '../utils/datamuse';
 import { nextWord } from '../utils/wordQueue';
@@ -11,22 +11,30 @@ const { width: SW, height: SH } = Dimensions.get('window');
 const HEADER_H = 120;
 const FOOTER_H = 20;
 const WORD_AREA_H = SH - HEADER_H - FOOTER_H;
+const WORD_BOUNDS = { width: SW, height: WORD_AREA_H };
 
-export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, hints, onUseHint, onEarnHints }) {
+const SURVIVAL_START_TIME = 60;
+
+export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints }) {
   const config = DIFFICULTY[difficulty] ?? DIFFICULTY.medium;
+  const isSurvival = mode === 'survival';
 
   const [targetWord, setTargetWord] = useState('');
   const [words, setWords] = useState([]);
   const [roundScore, setRoundScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(config.duration);
+  const [timeLeft, setTimeLeft] = useState(isSurvival ? SURVIVAL_START_TIME : config.duration);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(false);
   const [highlightedId, setHighlightedId] = useState(null);
+  const [wordsSolved, setWordsSolved] = useState(0);
+  const [countdown, setCountdown] = useState(null);
 
   const wordsRef = useRef([]);
   const roundScoreRef = useRef(0);
   const targetWordRef = useRef('');
+  const countdownScale = useRef(new Animated.Value(1)).current;
+  const countdownOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => { wordsRef.current = words; }, [words]);
 
@@ -35,7 +43,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   }, []);
 
   useEffect(() => {
-    if (loading || done) return;
+    if (loading || done || countdown !== null) return;
     if (timeLeft === 0) {
       setDone(true);
       onGameEnd({ ...buildResult(), allFound: false });
@@ -43,7 +51,23 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     }
     const t = setTimeout(() => setTimeLeft(n => n - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft, loading, done]);
+  }, [timeLeft, loading, done, countdown]);
+
+  useEffect(() => {
+    if (countdown === null) return;
+    countdownScale.setValue(0.4);
+    countdownOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(countdownScale, { toValue: 1, useNativeDriver: true, bounciness: 8 }),
+      Animated.timing(countdownOpacity, { toValue: 1, duration: 120, useNativeDriver: true }),
+    ]).start();
+    if (countdown === 0) {
+      const t = setTimeout(() => setCountdown(null), 700);
+      return () => clearTimeout(t);
+    }
+    const t = setTimeout(() => setCountdown(n => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [countdown]);
 
   function buildResult(ws = wordsRef.current) {
     return {
@@ -54,10 +78,12 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
       wrongTaps: ws.filter(w => !w.isSynonym && w.tapped).length,
       missedSynonyms: ws.filter(w => w.isSynonym && !w.tapped).map(w => w.word),
       foundSynonyms: ws.filter(w => w.isSynonym && w.tapped).map(w => w.word),
+      wordsSolved,
+      mode,
     };
   }
 
-  async function loadGame() {
+  async function loadGame(withCountdown = true) {
     let word, synonyms;
     let attempts = 0;
 
@@ -91,18 +117,28 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
 
     setWords(all);
     setLoading(false);
+    if (withCountdown) setCountdown(3);
   }
 
   useEffect(() => {
     if (done || loading || words.length === 0) return;
     const allFound = words.filter(w => w.isSynonym).every(w => w.tapped);
-    if (allFound) {
+    if (!allFound) return;
+
+    if (isSurvival) {
+      setTimeLeft(t => t + 25);
+      setWordsSolved(n => n + 1);
+      setLoading(true);
+      loadGame(false);
+    } else {
       setDone(true);
       onGameEnd({ ...buildResult(), allFound: true });
     }
   }, [words]);
 
-  function handleTap(wordId) {
+  const handleTap = useCallback((wordId) => {
+    const target = wordsRef.current.find(w => w.id === wordId);
+    const isWrong = target && !target.tapped && !target.isSynonym;
     let newScore = null;
 
     setWords(prev => {
@@ -119,7 +155,8 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     });
 
     if (newScore !== null) setRoundScore(newScore);
-  }
+    if (isSurvival && isWrong) setTimeLeft(t => Math.max(0, t - 2));
+  }, [isSurvival]);
 
   function handleHint() {
     if (hints <= 0 || done) return;
@@ -144,7 +181,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     );
   }
 
-  if (loading) {
+  if (loading && words.length === 0) {
     return (
       <SafeAreaView style={styles.center}>
         <Text style={styles.loadingText}>Loading...</Text>
@@ -163,8 +200,8 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
           <Text style={styles.statValue}>{displayScore}</Text>
         </View>
         <View style={styles.targetBox}>
-          <Text style={[styles.roundLabel, { color: config.color }]}>
-            Round {round} · {config.label}
+          <Text style={[styles.roundLabel, { color: isSurvival ? '#f43f5e' : config.color }]}>
+            {isSurvival ? `Survival · ${wordsSolved} solved` : `Round ${round} · ${config.label}`}
           </Text>
           <Text style={styles.findLabel}>find synonyms for</Text>
           <Text style={styles.targetWord}>{targetWord}</Text>
@@ -190,15 +227,29 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
         {words.map(w => (
           <FloatingWord
             key={w.id}
+            wordId={w.id}
             word={w.word}
             tapped={w.tapped}
             correct={w.correct}
             highlighted={w.id === highlightedId}
-            onTap={() => handleTap(w.id)}
-            bounds={{ width: SW, height: WORD_AREA_H }}
+            onTap={handleTap}
+            bounds={WORD_BOUNDS}
             speedMultiplier={config.speedMultiplier}
           />
         ))}
+        {countdown !== null && (
+          <View style={styles.countdownOverlay} pointerEvents="none">
+            <Animated.Text
+              style={[
+                styles.countdownText,
+                countdown === 0 && styles.countdownGo,
+                { opacity: countdownOpacity, transform: [{ scale: countdownScale }] },
+              ]}
+            >
+              {countdown === 0 ? 'Go!' : countdown}
+            </Animated.Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -311,5 +362,20 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
+  },
+  countdownOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 15, 46, 0.6)',
+  },
+  countdownText: {
+    fontSize: 100,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  countdownGo: {
+    fontSize: 72,
+    color: '#22c55e',
   },
 });

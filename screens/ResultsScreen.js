@@ -2,14 +2,23 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 
 export default function ResultsScreen({ result, onPlayAgain }) {
-  const { roundScore, totalScore, targetWord, correctFound, totalSynonyms, wrongTaps, missedSynonyms } = result;
+  const { roundScore, totalScore, targetWord, correctFound, totalSynonyms, wrongTaps, missedSynonyms, wordsSolved, mode } = result;
+  const isSurvival = mode === 'survival';
   const accuracy = totalSynonyms > 0 ? Math.round((correctFound / totalSynonyms) * 100) : 0;
 
   let grade, gradeColor;
-  if (accuracy >= 80) { grade = 'So close!'; gradeColor = '#f59e0b'; }
-  else if (accuracy >= 60) { grade = 'Good effort!'; gradeColor = '#6366f1'; }
-  else if (accuracy >= 40) { grade = 'Keep trying!'; gradeColor = '#fb923c'; }
-  else { grade = 'Practice more!'; gradeColor = '#ef4444'; }
+  if (isSurvival) {
+    const ws = wordsSolved ?? 0;
+    if (ws >= 10) { grade = 'Incredible!'; gradeColor = '#22c55e'; }
+    else if (ws >= 5) { grade = 'Great run!'; gradeColor = '#f59e0b'; }
+    else if (ws >= 2) { grade = 'Good effort!'; gradeColor = '#6366f1'; }
+    else { grade = 'Keep going!'; gradeColor = '#ef4444'; }
+  } else {
+    if (accuracy >= 80) { grade = 'So close!'; gradeColor = '#f59e0b'; }
+    else if (accuracy >= 60) { grade = 'Good effort!'; gradeColor = '#6366f1'; }
+    else if (accuracy >= 40) { grade = 'Keep trying!'; gradeColor = '#fb923c'; }
+    else { grade = 'Practice more!'; gradeColor = '#ef4444'; }
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,7 +35,8 @@ export default function ResultsScreen({ result, onPlayAgain }) {
         </View>
 
         <View style={styles.statsGrid}>
-          <StatTile label="Word" value={targetWord} wide />
+          {isSurvival && <StatTile label="Words Solved" value={wordsSolved ?? 0} wide />}
+          <StatTile label="Last Word" value={targetWord} wide={!isSurvival} />
           <StatTile label="Synonyms Found" value={`${correctFound} / ${totalSynonyms}`} />
           <StatTile label="Accuracy" value={`${accuracy}%`} />
           <StatTile label="Wrong Taps" value={wrongTaps} />

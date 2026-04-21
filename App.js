@@ -34,9 +34,11 @@ export default function App() {
   const [lastResult, setLastResult] = useState(null);
   const [result, setResult] = useState(null);
   const [difficulty, setDifficulty] = useState('medium');
+  const [mode, setMode] = useState('normal');
 
-  function handlePlay(selectedDifficulty) {
+  function handlePlay(selectedDifficulty, selectedMode = 'normal') {
     setDifficulty(selectedDifficulty);
+    setMode(selectedMode);
     setScreen('game');
   }
 
@@ -78,6 +80,7 @@ export default function App() {
           totalScore={totalScore}
           round={round}
           difficulty={difficulty}
+          mode={mode}
           hints={hints}
           onUseHint={handleUseHint}
           onEarnHints={handleEarnHints}

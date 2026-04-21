@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { DIFFICULTY } from '../constants/difficulty';
 
 export default function HomeScreen({ onPlay }) {
@@ -8,7 +8,7 @@ export default function HomeScreen({ onPlay }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Tappy{'\n'}Word</Text>
         <Text style={styles.subtitle}>How many synonyms can you find?</Text>
 
@@ -45,12 +45,27 @@ export default function HomeScreen({ onPlay }) {
 
         <TouchableOpacity
           style={[styles.playBtn, { backgroundColor: diff.color, shadowColor: diff.color }]}
-          onPress={() => onPlay(selected)}
+          onPress={() => onPlay(selected, 'normal')}
           activeOpacity={0.85}
         >
           <Text style={styles.playBtnText}>Play</Text>
         </TouchableOpacity>
-      </View>
+
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>or</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.survivalBtn}
+          onPress={() => onPlay(selected, 'survival')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.survivalBtnTitle}>⚡ Survival Mode</Text>
+          <Text style={styles.survivalBtnSub}>Solve words to add time · wrong taps cost 2s</Text>
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -70,10 +85,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f2e',
   },
   content: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
+    paddingTop: 48,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 52,
@@ -149,9 +165,10 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   playBtn: {
+    width: '100%',
     paddingVertical: 18,
-    paddingHorizontal: 72,
     borderRadius: 50,
+    alignItems: 'center',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.55,
     shadowRadius: 14,
@@ -162,5 +179,48 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 20,
+    gap: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#2d2d6e',
+  },
+  dividerText: {
+    color: '#4b4b70',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  survivalBtn: {
+    width: '100%',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    borderRadius: 50,
+    alignItems: 'center',
+    backgroundColor: '#1e1e4a',
+    borderWidth: 2,
+    borderColor: '#f43f5e',
+    shadowColor: '#f43f5e',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  survivalBtnTitle: {
+    color: '#f43f5e',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  survivalBtnSub: {
+    color: '#a5b4fc',
+    fontSize: 12,
+    marginTop: 4,
   },
 });

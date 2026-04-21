@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { TouchableOpacity, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Pressable, Text, StyleSheet, Animated, Easing } from 'react-native';
 
 const RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
-export default function FloatingWord({ word, tapped, correct, highlighted, onTap, bounds, speedMultiplier = 1 }) {
+function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bounds, speedMultiplier = 1 }) {
   const iX = useRef(Math.random() * Math.max(0, bounds.width - 130)).current;
   const iY = useRef(Math.random() * Math.max(0, bounds.height - 55)).current;
   const eX = useRef(Math.random() * Math.max(0, bounds.width - 130)).current;
@@ -16,9 +16,18 @@ export default function FloatingWord({ word, tapped, correct, highlighted, onTap
   const scale = useRef(new Animated.Value(1)).current;
   const bubbleOpacity = useRef(new Animated.Value(1)).current;
   const rayProgress = useRef(new Animated.Value(0)).current;
+  const wrongShakeX = useRef(new Animated.Value(0)).current;
+  const wrongFallY = useRef(new Animated.Value(0)).current;
 
-  // Stores actual bubble dimensions so rays can be centered on it
+  const crumbleDir = useRef(Math.random() > 0.5 ? 1 : -1).current;
+  const wrongRotate = wrongFallY.interpolate({
+    inputRange: [0, 40],
+    outputRange: ['0deg', `${crumbleDir * 22}deg`],
+  });
+
   const bubbleSizeRef = useRef({ width: 80, height: 37 });
+  const xAnimRef = useRef(null);
+  const yAnimRef = useRef(null);
 
   useEffect(() => {
     const easing = Easing.inOut(Easing.quad);
@@ -34,16 +43,18 @@ export default function FloatingWord({ word, tapped, correct, highlighted, onTap
         Animated.timing(y, { toValue: iY, duration: dur * 1.4, easing, useNativeDriver: true }),
       ])
     );
+    xAnimRef.current = xAnim;
+    yAnimRef.current = yAnim;
     xAnim.start();
     yAnim.start();
     return () => { xAnim.stop(); yAnim.stop(); };
   }, []);
 
+  // Correct tap: pop + rays
   useEffect(() => {
     if (!tapped || !correct) return;
     const timeout = setTimeout(() => {
       Animated.parallel([
-
         Animated.sequence([
           Animated.timing(scale, { toValue: 1.45, duration: 110, useNativeDriver: true }),
           Animated.timing(bubbleOpacity, { toValue: 0, duration: 180, useNativeDriver: true }),
@@ -54,6 +65,31 @@ export default function FloatingWord({ word, tapped, correct, highlighted, onTap
     return () => clearTimeout(timeout);
   }, [tapped, correct]);
 
+  // Wrong tap: shake then crumble and fall
+  useEffect(() => {
+    if (!tapped || correct) return;
+    xAnimRef.current?.stop();
+    yAnimRef.current?.stop();
+    const timeout = setTimeout(() => {
+      Animated.sequence([
+        Animated.sequence([
+          Animated.timing(wrongShakeX, { toValue: -9, duration: 55, useNativeDriver: true }),
+          Animated.timing(wrongShakeX, { toValue: 9, duration: 55, useNativeDriver: true }),
+          Animated.timing(wrongShakeX, { toValue: -7, duration: 55, useNativeDriver: true }),
+          Animated.timing(wrongShakeX, { toValue: 7, duration: 55, useNativeDriver: true }),
+          Animated.timing(wrongShakeX, { toValue: 0, duration: 55, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(wrongFallY, { toValue: 40, duration: 350, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 0.55, duration: 350, useNativeDriver: true }),
+          Animated.timing(bubbleOpacity, { toValue: 0, duration: 350, useNativeDriver: true }),
+        ]),
+      ]).start();
+    }, 50);
+    return () => clearTimeout(timeout);
+  }, [tapped, correct]);
+
+  // Hint highlight pulse
   useEffect(() => {
     if (!highlighted) { scale.setValue(1); return; }
     Animated.loop(
@@ -76,11 +112,15 @@ export default function FloatingWord({ word, tapped, correct, highlighted, onTap
     >
       <Animated.View
         onLayout={e => { bubbleSizeRef.current = e.nativeEvent.layout; }}
-        style={[styles.bubble, { backgroundColor: bgColor, opacity: bubbleOpacity, transform: [{ scale }] }]}
+        style={[
+          styles.bubble,
+          { backgroundColor: bgColor, opacity: bubbleOpacity },
+          { transform: [{ scale }, { translateX: wrongShakeX }, { translateY: wrongFallY }, { rotate: wrongRotate }] },
+        ]}
       >
-        <TouchableOpacity onPress={onTap} disabled={tapped} activeOpacity={0.7}>
+        <Pressable onPress={() => onTap(wordId)} disabled={tapped} hitSlop={10}>
           <Text style={[styles.text, highlighted && styles.textHighlighted]}>{word}</Text>
-        </TouchableOpacity>
+        </Pressable>
       </Animated.View>
 
       {tapped && correct && RAY_ANGLES.map((angle, i) => (
@@ -125,3 +165,5 @@ const styles = StyleSheet.create({
     color: '#0f0f2e',
   },
 });
+
+export default React.memo(FloatingWord);
