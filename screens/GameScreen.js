@@ -233,8 +233,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   }
 
   const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 15 ? '#fb923c' : '#fff';
-  const displayScore = totalScore + roundScore;
-  const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
+const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
   const totalCount = words.filter(w => w.isSynonym).length;
 
   const themeBg = theme?.bg ?? '#0f0f2e';
@@ -266,7 +265,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
             <Text style={styles.backBtnText}>← Back</Text>
           </TouchableOpacity>
           <Text style={styles.statLabel}>Score</Text>
-          <Text style={styles.statValue}>{displayScore}</Text>
+          <Text style={styles.statValue}>{roundScore}</Text>
         </View>
         <View style={styles.targetBox}>
           <Text style={[styles.roundLabel, { color: isSurvival ? '#f43f5e' : isFalling ? '#22d3ee' : config.color }]}>
