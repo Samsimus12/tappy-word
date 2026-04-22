@@ -275,7 +275,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
           <Text style={styles.findLabel}>find synonyms for</Text>
           <Text style={styles.targetWord}>{targetWord}</Text>
           <Text style={styles.wordCount}>
-            {foundCount} / {totalCount} found
+            {difficulty === 'hard' ? `${foundCount} found` : `${foundCount} / ${totalCount} found`}
           </Text>
         </View>
         <View style={styles.statBox}>
