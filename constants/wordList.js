@@ -1,11 +1,34 @@
 export const BASE_WORDS = [
-  'happy', 'sad', 'angry', 'brave', 'smart', 'fast', 'slow', 'big', 'small',
-  'cold', 'hot', 'dark', 'bright', 'quiet', 'loud', 'old', 'young', 'funny',
-  'beautiful', 'ugly', 'strong', 'weak', 'rich', 'poor', 'tired', 'afraid',
-  'gentle', 'cruel', 'honest', 'lazy', 'love', 'hate', 'help', 'start', 'stop',
-  'clean', 'dirty', 'kind', 'sharp', 'smooth', 'rough', 'sweet', 'empty',
-  'full', 'heavy', 'light', 'deep', 'calm', 'wild', 'soft', 'hard', 'fresh',
-  'safe', 'plain', 'clever', 'shy', 'proud', 'greedy', 'strange',
+  // emotions & mental states
+  'happy', 'sad', 'angry', 'afraid', 'tired', 'proud', 'shy', 'calm', 'wild',
+  'brave', 'lazy', 'greedy', 'strange', 'funny', 'clever', 'honest', 'cruel',
+  'gentle', 'kind',
+  'cheerful', 'gloomy', 'nervous', 'anxious', 'eager', 'excited', 'bored',
+  'curious', 'lonely', 'jealous', 'hopeful', 'content', 'furious', 'joyful',
+  'miserable', 'grateful', 'confused', 'humble', 'sincere', 'wicked',
+  'ashamed', 'restless', 'fearless', 'timid', 'bold',
+
+  // physical descriptors
+  'big', 'small', 'fast', 'slow', 'cold', 'hot', 'dark', 'bright', 'quiet',
+  'loud', 'old', 'young', 'strong', 'weak', 'heavy', 'light', 'deep', 'soft',
+  'hard', 'fresh', 'sharp', 'smooth', 'rough', 'sweet', 'empty', 'full',
+  'clean', 'dirty', 'safe', 'plain',
+  'wet', 'dry', 'thin', 'thick', 'tall', 'short', 'wide', 'flat', 'loose',
+  'tight', 'warm', 'cool', 'pale', 'dim', 'raw', 'bare', 'neat', 'messy',
+  'stiff', 'steep', 'vivid', 'faint', 'dense', 'dull', 'crooked',
+
+  // character & moral qualities
+  'rich', 'poor', 'beautiful', 'ugly',
+  'loyal', 'selfish', 'generous', 'modest', 'rude', 'polite', 'stubborn',
+  'patient', 'reckless', 'cautious', 'noble', 'fierce', 'clumsy', 'graceful',
+  'lively', 'careless', 'diligent', 'cowardly', 'strict',
+
+  // verbs
+  'love', 'hate', 'help', 'start', 'stop',
+  'grow', 'break', 'hide', 'fight', 'gather', 'teach', 'learn', 'create',
+  'destroy', 'protect', 'search', 'follow', 'fix', 'earn', 'save', 'waste',
+  'choose', 'change', 'find', 'give', 'take', 'show', 'push', 'pull',
+  'shout', 'whisper', 'rush', 'fall', 'rise',
 ];
 
 export const DISTRACTOR_WORDS = [
