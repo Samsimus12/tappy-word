@@ -76,6 +76,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   const roundScoreRef = useRef(0);
   const targetWordRef = useRef('');
   const wrongPenaltyRef = useRef(config.wrongPenalty);
+  const correctPointsRef = useRef(config.correctPoints ?? 10);
   const countdownScale = useRef(new Animated.Value(1)).current;
   const countdownOpacity = useRef(new Animated.Value(0)).current;
 
@@ -196,7 +197,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
       const updated = prev.map(w => {
         if (w.id !== wordId || w.tapped) return w;
         const correct = w.isSynonym;
-        const next = Math.max(0, roundScoreRef.current + (correct ? 10 : -wrongPenaltyRef.current));
+        const next = Math.max(0, roundScoreRef.current + (correct ? correctPointsRef.current : -wrongPenaltyRef.current));
         roundScoreRef.current = next;
         newScore = next;
         return { ...w, tapped: true, correct };
@@ -209,7 +210,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     if (isSurvival && isWrong) setTimeLeft(t => Math.max(0, t - 5));
 
     if (target && !target.tapped) {
-      const delta = target.isSynonym ? 10 : -wrongPenaltyRef.current;
+      const delta = target.isSynonym ? correctPointsRef.current : -wrongPenaltyRef.current;
       const pid = popupCounter.current++;
       setScorePopups(prev => [...prev, { id: pid, value: delta }]);
       playSound(target.isSynonym ? 'correct' : 'wrong');
