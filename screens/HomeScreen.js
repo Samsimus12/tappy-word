@@ -136,11 +136,11 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
             hitSlop={12}
             activeOpacity={0.6}
           >
-            <Text style={[styles.modeArrow, { color: currentMode.color ?? modeColor }]}>‹</Text>
+            <Text style={[styles.modeArrow, { color: modeColor }]}>‹</Text>
           </TouchableOpacity>
           <View style={styles.modeCard}>
             <Text style={styles.modeIcon}>{currentMode.icon}</Text>
-            <Text style={[styles.modeName, { color: currentMode.color ?? modeColor }]}>{currentMode.label}</Text>
+            <Text style={[styles.modeName, { color: modeColor }]}>{currentMode.label}</Text>
             <Text style={styles.modeSub}>{currentMode.sub}</Text>
           </View>
           <TouchableOpacity
@@ -148,7 +148,7 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
             hitSlop={12}
             activeOpacity={0.6}
           >
-            <Text style={[styles.modeArrow, { color: currentMode.color ?? modeColor }]}>›</Text>
+            <Text style={[styles.modeArrow, { color: modeColor }]}>›</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.modeDots}>
