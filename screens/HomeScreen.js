@@ -87,7 +87,7 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
   const [showSettings, setShowSettings] = useState(false);
   const diff = DIFFICULTY[selected];
   const currentMode = MODES[modeIndex];
-  const modeColor = currentMode.color ?? diff.color;
+  const modeColor = diff.color;
   const bg = theme?.bg ?? '#0f0f2e';
   const card = theme?.card ?? '#1e1e4a';
   const accent = theme?.accent ?? '#6366f1';
@@ -136,11 +136,11 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
             hitSlop={12}
             activeOpacity={0.6}
           >
-            <Text style={[styles.modeArrow, { color: modeColor }]}>‹</Text>
+            <Text style={[styles.modeArrow, { color: currentMode.color ?? modeColor }]}>‹</Text>
           </TouchableOpacity>
           <View style={styles.modeCard}>
             <Text style={styles.modeIcon}>{currentMode.icon}</Text>
-            <Text style={[styles.modeName, { color: modeColor }]}>{currentMode.label}</Text>
+            <Text style={[styles.modeName, { color: currentMode.color ?? modeColor }]}>{currentMode.label}</Text>
             <Text style={styles.modeSub}>{currentMode.sub}</Text>
           </View>
           <TouchableOpacity
@@ -148,7 +148,7 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
             hitSlop={12}
             activeOpacity={0.6}
           >
-            <Text style={[styles.modeArrow, { color: modeColor }]}>›</Text>
+            <Text style={[styles.modeArrow, { color: currentMode.color ?? modeColor }]}>›</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.modeDots}>
