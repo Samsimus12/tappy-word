@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { ACHIEVEMENTS } from '../constants/achievements';
+import { showRewardedAd } from '../utils/admob';
 
-export default function RoundCompleteScreen({ round, roundScore, totalScore, targetWord, foundSynonyms, onContinue, onBack, newAchievements = [], theme }) {
+export default function RoundCompleteScreen({ round, roundScore, totalScore, targetWord, foundSynonyms, onContinue, onBack, newAchievements = [], theme, hints = 0, onEarnHints }) {
+  const [adLoading, setAdLoading] = useState(false);
+
+  async function handleWatchAd() {
+    if (adLoading) return;
+    setAdLoading(true);
+    const earned = await showRewardedAd();
+    setAdLoading(false);
+    if (earned) onEarnHints(3);
+  }
   const bg = theme?.bg ?? '#0f0f2e';
   const card = theme?.card ?? '#1e1e4a';
   return (
@@ -56,6 +66,17 @@ export default function RoundCompleteScreen({ round, roundScore, totalScore, tar
           <Text style={styles.continueBtnText}>Continue →</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          style={[styles.adBtn, adLoading && styles.adBtnDisabled]}
+          onPress={handleWatchAd}
+          disabled={adLoading}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.adBtnText}>
+            {adLoading ? 'Loading ad...' : 'Watch Ad · +3 Hints'}
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={onBack} activeOpacity={0.6} style={styles.backLink}>
           <Text style={styles.backLinkText}>Back to Home</Text>
         </TouchableOpacity>
@@ -94,8 +115,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
-    paddingTop: 40,
-    paddingBottom: 40,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   badge: {
     color: '#a5b4fc',
@@ -103,15 +124,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   emoji: {
-    fontSize: 72,
-    marginBottom: 28,
+    fontSize: 60,
+    marginBottom: 16,
   },
   wordBox: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 20,
   },
   wordLabel: {
     color: '#a5b4fc',
@@ -120,7 +141,7 @@ const styles = StyleSheet.create({
   },
   word: {
     color: '#fbbf24',
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '800',
   },
   scoresRow: {
@@ -128,10 +149,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1e1e4a',
     borderRadius: 20,
-    paddingVertical: 24,
+    paddingVertical: 18,
     paddingHorizontal: 32,
     width: '100%',
-    marginBottom: 40,
+    marginBottom: 20,
   },
   scoreTile: {
     flex: 1,
@@ -139,7 +160,7 @@ const styles = StyleSheet.create({
   },
   scoreTileValue: {
     color: '#22c55e',
-    fontSize: 38,
+    fontSize: 34,
     fontWeight: '800',
   },
   totalValue: {
@@ -155,7 +176,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     width: 1,
-    height: 48,
+    height: 44,
     backgroundColor: '#2d2d6e',
     marginHorizontal: 8,
   },
@@ -163,37 +184,53 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#1e1e4a',
     borderRadius: 16,
-    padding: 18,
-    marginBottom: 28,
+    padding: 14,
+    marginBottom: 20,
   },
   foundHeading: {
     color: '#22c55e',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   foundList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 7,
   },
   foundChip: {
     backgroundColor: '#14291f',
     borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderWidth: 1,
     borderColor: '#22c55e',
   },
   foundWord: {
     color: '#86efac',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
   },
+  adBtn: {
+    marginTop: 10,
+    paddingVertical: 11,
+    paddingHorizontal: 28,
+    borderRadius: 50,
+    borderWidth: 1.5,
+    borderColor: '#fbbf24',
+  },
+  adBtnDisabled: {
+    borderColor: '#4b4b70',
+  },
+  adBtnText: {
+    color: '#fbbf24',
+    fontSize: 14,
+    fontWeight: '600',
+  },
   backLink: {
-    marginTop: 16,
+    marginTop: 10,
     paddingVertical: 8,
   },
   backLinkText: {
@@ -204,7 +241,7 @@ const styles = StyleSheet.create({
   },
   continueBtn: {
     backgroundColor: '#6366f1',
-    paddingVertical: 18,
+    paddingVertical: 16,
     paddingHorizontal: 56,
     borderRadius: 50,
     shadowColor: '#6366f1',

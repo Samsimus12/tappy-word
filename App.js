@@ -230,6 +230,8 @@ export default function App() {
           onBack={handleBack}
           newAchievements={newAchievements}
           theme={theme}
+          hints={hints}
+          onEarnHints={handleEarnHints}
         />
       )}
       {screen === 'results' && (
