@@ -23,6 +23,7 @@ export default function App() {
 
   const nextAdRoundRef = useRef(Math.floor(Math.random() * 4) + 3);
   const watchedRewardedAdRef = useRef(false);
+  const secondChanceUsedRef = useRef(false);
 
   const [achData, setAchData] = useState({ unlockedIds: [], selectedTheme: 'default', modesPlayed: [] });
   const achDataRef = useRef(achData);
@@ -190,6 +191,7 @@ export default function App() {
     setNewAchievements([]);
     nextAdRoundRef.current = Math.floor(Math.random() * 4) + 3;
     watchedRewardedAdRef.current = false;
+    secondChanceUsedRef.current = false;
     setScreen('home');
   }
 
@@ -201,6 +203,7 @@ export default function App() {
     setNewAchievements([]);
     nextAdRoundRef.current = Math.floor(Math.random() * 4) + 3;
     watchedRewardedAdRef.current = false;
+    secondChanceUsedRef.current = false;
     setScreen('game');
   }
 
@@ -232,6 +235,8 @@ export default function App() {
           onEarnHints={handleEarnHints}
           onResetHints={handleResetHints}
           theme={theme}
+          secondChanceAvailable={!secondChanceUsedRef.current}
+          onSecondChanceUsed={() => { secondChanceUsedRef.current = true; }}
         />
       )}
       {screen === 'round-complete' && (

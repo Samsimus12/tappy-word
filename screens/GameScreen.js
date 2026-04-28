@@ -53,7 +53,7 @@ function ScorePopup({ id, value, onComplete }) {
   );
 }
 
-export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints, onResetHints, theme }) {
+export default function GameScreen({ onGameEnd, onBack, totalScore, round, difficulty, mode, hints, onUseHint, onEarnHints, onResetHints, theme, secondChanceAvailable, onSecondChanceUsed }) {
   const config = DIFFICULTY[difficulty] ?? DIFFICULTY.medium;
   const isSurvival = mode === 'survival';
   const isFalling = mode === 'falling';
@@ -73,6 +73,8 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   const popupCounter = useRef(0);
   const [showQuitModal, setShowQuitModal] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
+  const [showSecondChance, setShowSecondChance] = useState(false);
+  const [secondChanceAdLoading, setSecondChanceAdLoading] = useState(false);
 
   const wordsRef = useRef([]);
   const roundScoreRef = useRef(0);
@@ -93,9 +95,13 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     if (loading || done || countdown !== null || showQuitModal) return;
     if (timeLeft === 0) {
       setDone(true);
-      playSound('fail');
-      stopMusic();
-      onGameEnd({ ...buildResult(wordsRef.current, 0), allFound: false });
+      if (secondChanceAvailable) {
+        setShowSecondChance(true);
+      } else {
+        playSound('fail');
+        stopMusic();
+        onGameEnd({ ...buildResult(wordsRef.current, 0), allFound: false });
+      }
       return;
     }
     const t = setTimeout(() => setTimeLeft(n => n - 1), 1000);
@@ -237,6 +243,30 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
     if (earned) onEarnHints(3);
   }
 
+  async function handleSecondChance() {
+    setSecondChanceAdLoading(true);
+    const earned = await showRewardedAd();
+    setSecondChanceAdLoading(false);
+    setShowSecondChance(false);
+    if (earned) {
+      onSecondChanceUsed();
+      setDone(false);
+      setTimeLeft(15);
+      playSound('go');
+    } else {
+      playSound('fail');
+      stopMusic();
+      onGameEnd({ ...buildResult(wordsRef.current, 0), allFound: false });
+    }
+  }
+
+  function handleDeclineSecondChance() {
+    setShowSecondChance(false);
+    playSound('fail');
+    stopMusic();
+    onGameEnd({ ...buildResult(wordsRef.current, 0), allFound: false });
+  }
+
   const timerColor = timeLeft <= 10 ? '#ef4444' : timeLeft <= 15 ? '#fb923c' : '#fff';
 const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
   const totalCount = words.filter(w => w.isSynonym).length;
@@ -348,6 +378,34 @@ const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
           <ScorePopup key={p.id} id={p.id} value={p.value} onComplete={removePopup} />
         ))}
       </View>
+
+      <Modal visible={showSecondChance} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalBox, { backgroundColor: themeCard }]}>
+            <Text style={styles.secondChanceEmoji}>⏱️</Text>
+            <Text style={styles.modalTitle}>Time's Up!</Text>
+            <Text style={styles.modalSub}>Watch an ad to keep playing{'\n'}with 15 extra seconds.</Text>
+            <TouchableOpacity
+              style={[styles.secondChanceBtn, secondChanceAdLoading && styles.hintBtnDisabled]}
+              onPress={handleSecondChance}
+              disabled={secondChanceAdLoading}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.secondChanceBtnText}>
+                {secondChanceAdLoading ? 'Loading...' : 'Watch Ad · +15s'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalCancelBtn}
+              onPress={handleDeclineSecondChance}
+              disabled={secondChanceAdLoading}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalCancelText}>No thanks</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={showQuitModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
@@ -507,6 +565,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '78%',
     gap: 12,
+  },
+  secondChanceEmoji: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  secondChanceBtn: {
+    backgroundColor: '#6366f1',
+    borderRadius: 50,
+    paddingVertical: 14,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  secondChanceBtnText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   modalTitle: {
     color: '#fff',
