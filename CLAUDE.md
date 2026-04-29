@@ -1,4 +1,4 @@
-# Tappy Word — Project Handoff
+# Synonym Bun (formerly Tappy Word) — Project Handoff
 
 ## What this is
 A mobile word-synonym puzzle game for iOS and Android built with **Expo (React Native)**. The player is shown a target word and must tap all its synonyms floating around the screen before the timer runs out. Finding all synonyms advances to the next round; failing ends the game and shows a total score.
@@ -114,6 +114,8 @@ Three ad placements:
 
 **Dev mode**: all ads use `TestIds.REWARDED` / `TestIds.INTERSTITIAL` automatically via `__DEV__`
 
+**AdMob status**: App is linked to AdMob (publisher `ca-app-pub-7289760521218684`) and ad units are active. Ads were not yet serving as of April 29 — likely just needs 24 hours to activate after linking. Ad code is confirmed working (test ads work in simulator). When ads fail to load in production, `showRewardedAd()` resolves `false` silently — button briefly shows "Loading..." then resets, looks like nothing happened.
+
 ## Hints
 - Players start with 10 hints, persisted via AsyncStorage
 - Tapping highlights a random unfound synonym for 2 seconds
@@ -132,10 +134,13 @@ Three ad placements:
 - **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` actually works
 - **Sound file casing**: All sound files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
 
-## App Store status
-- **iOS v1.0 submitted for App Review** (April 28, 2026) — awaiting Apple review (24–48hrs)
-- Bundle ID: `com.sammorrison.tappyword` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
-- Android AdMob IDs are set but no Android build has been done yet — full Google Play Store submission still needed (build, Play Console setup, listing, review)
+## App Store / rename status
+- **App is LIVE on iOS App Store** as "Tappy Word" (approved ~April 29, 2026)
+- **NAME CONFLICT**: There is already an existing app called "Tappy Word" (and "Tappy Word 2") on the App Store — the app needs to be renamed
+- **New name: "Synonym Bun"** — agreed, pending implementation
+- **Rename TODO**: Update app name in `app.json`, bundle ID to `com.sammorrison.synonymbun`, all hardcoded "Tappy Word" strings in UI, generate new app icon + splash screen + App Store screenshots, create new App Store Connect listing
+- Current bundle ID: `com.sammorrison.tappyword` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
+- Android AdMob IDs are set but no Android build has been done yet — full Google Play Store submission still needed
 
 ## Ideas / future features
 - **Rocket power-up**: destroys all remaining synonym bubbles on screen at once. Earned at a rate of ~1 per 1000 points scored (exact threshold TBD). Intended to be rare and satisfying — not purchasable, purely score-gated.
