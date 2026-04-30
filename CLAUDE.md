@@ -20,7 +20,7 @@ npx expo run:ios --simulator "iPad Pro 13-inch (M4)"  # 13" — required (suppor
 Take screenshots with `Cmd+S` in Simulator, or `xcrun simctl io booted screenshot screenshot.png`.
 
 ## GitHub
-https://github.com/Samsimus12/tappy-word (rename to synonym-bun pending)
+https://github.com/Samsimus12/synonym-bun
 
 ## Tech stack
 - **Expo SDK 54** with New Architecture enabled (`newArchEnabled: true`)
@@ -149,11 +149,11 @@ Three ad placements:
 - HomeScreen title updated to "Synonym Bun" (`screens/HomeScreen.js` line 109)
 - New 1024×1024 app icon added (`assets/icon.png`) — Synonym Bun branded
 - New splash screen added (`assets/splash-icon.png`) — 688×1504, portrait
+- GitHub repo renamed to `synonym-bun`
 
 **Still needed (do in order):**
-1. Rename GitHub repo: `gh repo rename synonym-bun`
-2. Move local folder: `mv ~/Documents/repos/tappy-word ~/Documents/repos/synonym-bun`
-3. Update `app.json`: `name` → "Synonym Bun", `slug` → "synonym-bun", `bundleIdentifier` → `com.sammorrison.synonymbun`
+1. Move local folder: `mv ~/Documents/repos/tappy-word ~/Documents/repos/synonym-bun`
+2. Update `app.json`: `name` → "Synonym Bun", `slug` → "synonym-bun", `bundleIdentifier` → `com.sammorrison.synonymbun`
 4. Take new App Store screenshots using simulator commands above
 5. Create new App Store Connect listing under "Synonym Bun" (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
 
