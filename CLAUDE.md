@@ -5,7 +5,7 @@ A mobile word-synonym puzzle game for iOS and Android built with **Expo (React N
 
 ## Running the project
 ```
-cd ~/Documents/repos/tappy-word        # folder rename to synonym-bun is pending
+cd ~/Documents/repos/synonym-bun
 npx expo start --clear
 ```
 - **Expo Go no longer works** — `react-native-google-mobile-ads` is a native module requiring a custom dev client
@@ -14,9 +14,10 @@ npx expo start --clear
 
 **Simulator commands for App Store screenshots:**
 ```bash
-npx expo run:ios --simulator "iPhone 16 Pro Max"   # 6.9" — required
-npx expo run:ios --simulator "iPad Pro 13-inch (M4)"  # 13" — required (supportsTablet: true)
+npx expo run:ios --device "iPhone 17 Pro Max"    # 6.9" — required
+npx expo run:ios --device "iPad Pro 13-inch (M5)" # 13" — required (supportsTablet: true)
 ```
+Note: flag is `--device`, not `--simulator` (changed in newer Expo CLI). Xcode only has iPhone 17 models — no iPhone 16.
 Take screenshots with `Cmd+S` in Simulator, or `xcrun simctl io booted screenshot screenshot.png`.
 
 ## GitHub
@@ -143,21 +144,23 @@ Three ad placements:
 - **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` actually works
 - **Sound file casing**: All sound files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
 
-## Rename status — "Synonym Bun" (in progress)
+## Rename status — "Synonym Bun" (name under reconsideration)
 
 **Done:**
 - HomeScreen title updated to "Synonym Bun" (`screens/HomeScreen.js` line 109)
 - New 1024×1024 app icon added (`assets/icon.png`) — Synonym Bun branded
 - New splash screen added (`assets/splash-icon.png`) — 688×1504, portrait
 - GitHub repo renamed to `synonym-bun`
+- `app.json` updated: `name` → "Synonym Bun", `slug` → "synonym-bun", `bundleIdentifier` → `com.sammorrison.synonymbun`
+
+**Note**: The name "Synonym Bun" is being reconsidered. If the name changes, update: `screens/HomeScreen.js` line 109, `app.json` (name/slug/bundleIdentifier), GitHub repo name, and app icon/splash assets.
 
 **Still needed (do in order):**
-1. Move local folder: `mv ~/Documents/repos/tappy-word ~/Documents/repos/synonym-bun`
-2. Update `app.json`: `name` → "Synonym Bun", `slug` → "synonym-bun", `bundleIdentifier` → `com.sammorrison.synonymbun`
-4. Take new App Store screenshots using simulator commands above
-5. Create new App Store Connect listing under "Synonym Bun" (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
+1. Decide on final app name
+2. Take App Store screenshots using simulator commands above
+3. Create new App Store Connect listing (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
 
-Current bundle ID: `com.sammorrison.tappyword` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
+Current bundle ID: `com.sammorrison.synonymbun` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
 
 Android: AdMob IDs set, no build done yet — full Google Play submission still needed.
 
