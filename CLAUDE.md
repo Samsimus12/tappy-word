@@ -59,8 +59,8 @@ utils/
   audio.js                      # expo-av audio manager: initAudio(), playSound(name), startMusic(), stopMusic()
   admob.js                      # AdMob wrapper: showRewardedAd(), preloadInterstitial(), showInterstitial()
 assets/
-  icon.png                      # 1024×1024 app icon (currently Synonym Bun branded — needs Word Sweep replacement; has alpha flag but no transparent pixels — strip if App Store rejects)
-  splash-icon.png               # 688×1504 splash logo — resizeMode: contain, bg #0f0f2e (dark navy) — needs Word Sweep replacement
+  icon.png                      # 1024×1024 app icon — currently still Synonym Bun branded, Word Sweep replacement ready to drop in; strip alpha flag if App Store rejects
+  splash-icon.png               # 688×1504 splash logo — resizeMode: contain, bg #0f0f2e (dark navy) — currently still Synonym Bun branded, Word Sweep replacement ready to drop in
   sounds/                       # WAV sound effects (Success, Fail, Hint, Countdown, Go) — all capitalized
   music/                        # Menu.wav (home loop) + 4 game tracks (randomly selected per round)
 ```
@@ -144,18 +144,20 @@ Three ad placements:
 - **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` actually works
 - **Sound file casing**: All sound files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
 
-## Rename status — "Word Sweep" (final name)
+## Rename status — "Word Sweep" (final name, rename complete)
 
 **Done:**
 - HomeScreen title updated to "Word Sweep" (`screens/HomeScreen.js` line 109)
 - `app.json` updated: `name` → "Word Sweep", `slug` → "word-sweep", `bundleIdentifier` → `com.sammorrison.wordsweep`
+- GitHub repo renamed to `word-sweep`
+- Local directory renamed to `~/Documents/repos/word-sweep`
+- Git remote URL updated to `https://github.com/Samsimus12/word-sweep.git`
 
 **Still needed (do in order):**
-1. Rename GitHub repo from `synonym-bun` → `word-sweep` (Settings → Repository name)
-2. Replace `assets/icon.png` with Word Sweep branded 1024×1024 icon
-3. Replace `assets/splash-icon.png` with Word Sweep branded splash (688×1504, portrait, bg #0f0f2e)
-4. Take App Store screenshots using simulator commands above
-5. Create new App Store Connect listing (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
+1. Review and drop in new Word Sweep branded `assets/icon.png` (1024×1024, no alpha)
+2. Review and drop in new Word Sweep branded `assets/splash-icon.png` (688×1504, portrait, bg #0f0f2e)
+3. Take App Store screenshots using simulator commands above
+4. Create new App Store Connect listing (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
 
 Current bundle ID: `com.sammorrison.wordsweep` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
 
