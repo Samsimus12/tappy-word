@@ -5,15 +5,22 @@ A mobile word-synonym puzzle game for iOS and Android built with **Expo (React N
 
 ## Running the project
 ```
-cd ~/Documents/repos/tappy-word
+cd ~/Documents/repos/tappy-word        # folder rename to synonym-bun is pending
 npx expo start --clear
 ```
 - **Expo Go no longer works** — `react-native-google-mobile-ads` is a native module requiring a custom dev client
 - Use `npx expo run:ios` for local device/simulator testing
 - Or `eas build --platform ios --profile development` for a device build via EAS
 
+**Simulator commands for App Store screenshots:**
+```bash
+npx expo run:ios --simulator "iPhone 16 Pro Max"   # 6.9" — required
+npx expo run:ios --simulator "iPad Pro 13-inch (M4)"  # 13" — required (supportsTablet: true)
+```
+Take screenshots with `Cmd+S` in Simulator, or `xcrun simctl io booted screenshot screenshot.png`.
+
 ## GitHub
-https://github.com/Samsimus12/tappy-word
+https://github.com/Samsimus12/tappy-word (rename to synonym-bun pending)
 
 ## Tech stack
 - **Expo SDK 54** with New Architecture enabled (`newArchEnabled: true`)
@@ -51,6 +58,8 @@ utils/
   audio.js                      # expo-av audio manager: initAudio(), playSound(name), startMusic(), stopMusic()
   admob.js                      # AdMob wrapper: showRewardedAd(), preloadInterstitial(), showInterstitial()
 assets/
+  icon.png                      # 1024×1024 Synonym Bun app icon (has alpha flag but no transparent pixels — strip if App Store rejects)
+  splash-icon.png               # 688×1504 splash logo — resizeMode: contain, bg #0f0f2e (dark navy)
   sounds/                       # WAV sound effects (Success, Fail, Hint, Countdown, Go) — all capitalized
   music/                        # Menu.wav (home loop) + 4 game tracks (randomly selected per round)
 ```
@@ -114,7 +123,7 @@ Three ad placements:
 
 **Dev mode**: all ads use `TestIds.REWARDED` / `TestIds.INTERSTITIAL` automatically via `__DEV__`
 
-**AdMob status**: App is linked to AdMob (publisher `ca-app-pub-7289760521218684`) and ad units are active. Ads were not yet serving as of April 29 — likely just needs 24 hours to activate after linking. Ad code is confirmed working (test ads work in simulator). When ads fail to load in production, `showRewardedAd()` resolves `false` silently — button briefly shows "Loading..." then resets, looks like nothing happened.
+**AdMob status**: App linked to AdMob (publisher `ca-app-pub-7289760521218684`), ad units active. Ads were not yet serving as of April 29 — likely needs 24h to activate. Test ads confirmed working in simulator. When ads fail to load in production, `showRewardedAd()` resolves `false` silently — button briefly shows "Loading..." then resets.
 
 ## Hints
 - Players start with 10 hints, persisted via AsyncStorage
@@ -134,16 +143,26 @@ Three ad placements:
 - **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` actually works
 - **Sound file casing**: All sound files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
 
-## App Store / rename status
-- **App is LIVE on iOS App Store** as "Tappy Word" (approved ~April 29, 2026)
-- **NAME CONFLICT**: There is already an existing app called "Tappy Word" (and "Tappy Word 2") on the App Store — the app needs to be renamed
-- **New name: "Synonym Bun"** — agreed, pending implementation
-- **Rename TODO**: Update app name in `app.json`, bundle ID to `com.sammorrison.synonymbun`, all hardcoded "Tappy Word" strings in UI, generate new app icon + splash screen + App Store screenshots, create new App Store Connect listing
-- Current bundle ID: `com.sammorrison.tappyword` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
-- Android AdMob IDs are set but no Android build has been done yet — full Google Play Store submission still needed
+## Rename status — "Synonym Bun" (in progress)
+
+**Done:**
+- HomeScreen title updated to "Synonym Bun" (`screens/HomeScreen.js` line 109)
+- New 1024×1024 app icon added (`assets/icon.png`) — Synonym Bun branded
+- New splash screen added (`assets/splash-icon.png`) — 688×1504, portrait
+
+**Still needed (do in order):**
+1. Rename GitHub repo: `gh repo rename synonym-bun`
+2. Move local folder: `mv ~/Documents/repos/tappy-word ~/Documents/repos/synonym-bun`
+3. Update `app.json`: `name` → "Synonym Bun", `slug` → "synonym-bun", `bundleIdentifier` → `com.sammorrison.synonymbun`
+4. Take new App Store screenshots using simulator commands above
+5. Create new App Store Connect listing under "Synonym Bun" (name conflict: existing "Tappy Word" and "Tappy Word 2" apps on store)
+
+Current bundle ID: `com.sammorrison.tappyword` | EAS project ID: `8449672c-5804-457f-8203-702ba1dd8c05`
+
+Android: AdMob IDs set, no build done yet — full Google Play submission still needed.
 
 ## Ideas / future features
-- **Rocket power-up**: destroys all remaining synonym bubbles on screen at once. Earned at a rate of ~1 per 1000 points scored (exact threshold TBD). Intended to be rare and satisfying — not purchasable, purely score-gated.
+- **Rocket power-up**: destroys all remaining synonym bubbles on screen at once. Earned ~1 per 1000 points scored. Rare and satisfying — not purchasable, purely score-gated.
 - No persistent high score yet (AsyncStorage addition would be straightforward)
 - No haptics yet (`expo-haptics` would pair well with tap sounds)
 - Datamuse occasionally returns 0 synonyms — fallback covers original BASE_WORDS only
