@@ -5,7 +5,7 @@ A mobile word-synonym puzzle game for iOS and Android built with **Expo (React N
 
 ## Running the project
 ```
-cd ~/Documents/repos/synonym-bun
+cd ~/Documents/repos/word-sweep
 npx expo start --clear
 ```
 - **Expo Go no longer works** — `react-native-google-mobile-ads` is a native module requiring a custom dev client
