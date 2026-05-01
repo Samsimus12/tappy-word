@@ -15,7 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "buildNumber": "1",
-      "bundleIdentifier": "com.sammorrison.tappywordburst",
+      "bundleIdentifier": "com.sammorrison.tappyword",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
