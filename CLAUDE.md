@@ -25,10 +25,11 @@ https://github.com/Samsimus12/tappy-word-burst
 
 ## App identity
 - **Display name**: Tappy Word Burst
-- **Bundle ID**: `com.sammorrison.tappyword` (note: NOT tappywordburst — changed to match App Store Connect app)
+- **Bundle ID / Android package**: `com.sammorrison.tappyword` (note: NOT tappywordburst — changed to match App Store Connect app)
 - **Slug**: `tappy-word-burst`
 - **EAS project ID**: `5079b3ac-0adf-4824-868e-1f48247c525c`
 - **App Store Connect app ID**: `6764457991` (pinned in `eas.json` as `ascAppId`)
+- **Android versionCode**: `1` (first release)
 - **AdMob publisher**: `ca-app-pub-7289760521218684`
 
 ## Tech stack
@@ -158,11 +159,24 @@ All ad unit IDs are platform-specific via `Platform.OS` in `utils/admob.js`.
 - Submit future builds with: `eas build --platform ios --profile production` then `eas submit --platform ios --latest`
 - Screenshots already taken and uploaded
 - **app-ads.txt** hosted at `https://samsimus12.github.io/app-ads.txt` via the `samsimus12.github.io` GitHub Pages repo
-- **TODO (next release)**: Update Support URL and Marketing URL in App Store Connect to `https://samsimus12.github.io` — these fields can only be changed when submitting a new app version
 
 ## Still needed
 - Replace `assets/icon.png` with a higher-resolution version (current one is slightly blurry — upscaled from low-res source; new ChatGPT-generated image needed)
-- Android: AdMob IDs set, no build done yet — full Google Play submission still needed
+- **TODO (next release)**: Update Support URL and Marketing URL in App Store Connect to `https://samsimus12.github.io` — these fields can only be changed when submitting a new app version
+
+## Android / Google Play — in progress
+Android config is ready (`package`, `versionCode`, AdMob IDs all set in `app.json`). Blocked on Google Play developer account setup:
+1. ✅ Account created, $25 fee paid
+2. ⏳ Identity verification (government ID upload — takes hours to days)
+3. ⏳ Android device verification (requires Google Play Console app on a real Android device)
+4. ⏳ Contact number verification (SMS)
+
+Once all three are verified, the steps to ship Android are:
+```bash
+eas build --platform android --profile production
+eas submit --platform android --latest
+```
+Then create the app listing in Google Play Console and complete store metadata (description, screenshots, content rating, etc.).
 
 ## Ideas / future features
 - **Rocket power-up**: destroys all remaining synonym bubbles on screen at once. Earned ~1 per 1000 points scored. Rare and satisfying — not purchasable, purely score-gated.
