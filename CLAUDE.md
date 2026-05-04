@@ -186,6 +186,7 @@ eas submit --platform android --latest
 - Animation smoothness on Android: `useNativeDriver: false` for position animations may look choppy on low-end devices. If it's a problem on real hardware (not just emulator), consider a parent-level touch handler in GameScreen that tracks positions via `addListener` and restores native driver.
 
 ## Ideas / future features
+- **Time bonus on round complete**: award bonus points based on time remaining when all synonyms are found. Rewards fast play and adds incentive to clear rounds quickly. Would be calculated in `App.js` `handleRoundComplete` where `timeLeft` is accessible.
 - **Rocket power-up**: destroys all remaining synonym bubbles at once. Earned ~1 per 1000 points scored — rare, satisfying, not purchasable.
 - No persistent high score yet (AsyncStorage addition would be straightforward)
 - No haptics yet (`expo-haptics` would pair well with tap sounds)
