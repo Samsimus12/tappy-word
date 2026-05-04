@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { ACHIEVEMENTS, THEMES } from '../constants/achievements';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 
 export default function AchievementsScreen({ unlockedIds, selectedTheme, onSelectTheme, onBack, theme }) {
   const unlockedSet = new Set(unlockedIds);
@@ -97,6 +98,7 @@ export default function AchievementsScreen({ unlockedIds, selectedTheme, onSelec
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: ANDROID_TOP,
   },
   header: {
     flexDirection: 'row',

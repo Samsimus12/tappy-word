@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, Dimensions, Animated, Easing, Modal } from 'react-native';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 import { DIFFICULTY } from '../constants/difficulty';
 
 const { width: SW, height: SH } = Dimensions.get('window');
@@ -264,6 +265,7 @@ export default function HomeScreen({ onPlay, sfxEnabled, musicEnabled, onToggleS
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: ANDROID_TOP,
   },
   topBar: {
     flexDirection: 'row',

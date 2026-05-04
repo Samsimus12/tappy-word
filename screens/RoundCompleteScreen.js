@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { ACHIEVEMENTS } from '../constants/achievements';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 import { showRewardedAd } from '../utils/admob';
 import { pauseMusic, resumeMusic } from '../utils/audio';
 
@@ -91,6 +92,7 @@ export default function RoundCompleteScreen({ round, roundScore, totalScore, tar
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: ANDROID_TOP,
   },
   achBanner: {
     width: '100%',

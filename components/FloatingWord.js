@@ -1,18 +1,27 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, Animated, Easing } from 'react-native';
 
 const RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bounds, speedMultiplier = 1, bubbleColor = '#3b3b8f' }) {
-  const iX = useRef(Math.random() * Math.max(0, bounds.width - 130)).current;
-  const iY = useRef(Math.random() * Math.max(0, bounds.height - 55)).current;
-  const eX = useRef(Math.random() * Math.max(0, bounds.width - 130)).current;
-  const eY = useRef(Math.random() * Math.max(0, bounds.height - 55)).current;
   const dur = useRef((3500 + Math.random() * 4000) / speedMultiplier).current;
   const delayMs = useRef(Math.random() * 1500).current;
 
-  const x = useRef(new Animated.Value(iX)).current;
-  const y = useRef(new Animated.Value(iY)).current;
+  // Updated by onLayout to actual rendered size; conservative initial estimate keeps first
+  // target in-bounds before layout fires.
+  const bubbleSizeRef = useRef({ width: 150, height: 55 });
+  // Mirror bounds prop so the recursive animation closure always reads the latest value.
+  const boundsRef = useRef(bounds);
+  useEffect(() => { boundsRef.current = bounds; }, [bounds]);
+
+  const tappedRef = useRef(tapped);
+  useEffect(() => { tappedRef.current = tapped; }, [tapped]);
+
+  const initX = useRef(Math.random() * Math.max(0, bounds.width - 150)).current;
+  const initY = useRef(Math.random() * Math.max(0, bounds.height - 55)).current;
+
+  const x = useRef(new Animated.Value(initX)).current;
+  const y = useRef(new Animated.Value(initY)).current;
   const scale = useRef(new Animated.Value(1)).current;
   const bubbleOpacity = useRef(new Animated.Value(1)).current;
   const rayProgress = useRef(new Animated.Value(0)).current;
@@ -25,29 +34,36 @@ function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bound
     outputRange: ['0deg', `${crumbleDir * 22}deg`],
   });
 
-  const bubbleSizeRef = useRef({ width: 80, height: 37 });
-  const xAnimRef = useRef(null);
-  const yAnimRef = useRef(null);
+  const activeAnimRef = useRef(null);
 
   useEffect(() => {
     const easing = Easing.inOut(Easing.quad);
-    const xAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(x, { toValue: eX, duration: dur, delay: delayMs, easing, useNativeDriver: true }),
-        Animated.timing(x, { toValue: iX, duration: dur, easing, useNativeDriver: true }),
-      ])
-    );
-    const yAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(y, { toValue: eY, duration: dur * 1.4, delay: delayMs, easing, useNativeDriver: true }),
-        Animated.timing(y, { toValue: iY, duration: dur * 1.4, easing, useNativeDriver: true }),
-      ])
-    );
-    xAnimRef.current = xAnim;
-    yAnimRef.current = yAnim;
-    xAnim.start();
-    yAnim.start();
-    return () => { xAnim.stop(); yAnim.stop(); };
+    let active = true;
+
+    const moveToNext = () => {
+      if (!active || tappedRef.current) return;
+      const b = boundsRef.current;
+      const s = bubbleSizeRef.current;
+      const targetX = Math.random() * Math.max(0, b.width - s.width);
+      const targetY = Math.random() * Math.max(0, b.height - s.height);
+      const anim = Animated.parallel([
+        // useNativeDriver: false keeps the view's layout position in sync with the visual,
+        // so Android touch targets follow the bubbles correctly.
+        Animated.timing(x, { toValue: targetX, duration: dur, easing, useNativeDriver: false }),
+        Animated.timing(y, { toValue: targetY, duration: dur * 1.4, easing, useNativeDriver: false }),
+      ]);
+      activeAnimRef.current = anim;
+      anim.start(({ finished }) => {
+        if (finished && active && !tappedRef.current) moveToNext();
+      });
+    };
+
+    const timeout = setTimeout(moveToNext, delayMs);
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+      activeAnimRef.current?.stop();
+    };
   }, []);
 
   // Correct tap: pop + rays
@@ -68,8 +84,7 @@ function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bound
   // Wrong tap: shake then crumble and fall
   useEffect(() => {
     if (!tapped || correct) return;
-    xAnimRef.current?.stop();
-    yAnimRef.current?.stop();
+    activeAnimRef.current?.stop();
     const timeout = setTimeout(() => {
       Animated.sequence([
         Animated.sequence([
@@ -109,6 +124,9 @@ function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bound
   return (
     <Animated.View
       style={{ position: 'absolute', transform: [{ translateX: x }, { translateY: y }] }}
+      hitSlop={10}
+      onStartShouldSetResponder={() => !tapped}
+      onResponderRelease={() => { if (!tapped) onTap(wordId); }}
     >
       <Animated.View
         onLayout={e => { bubbleSizeRef.current = e.nativeEvent.layout; }}
@@ -118,9 +136,7 @@ function FloatingWord({ wordId, word, tapped, correct, highlighted, onTap, bound
           { transform: [{ scale }, { translateX: wrongShakeX }, { translateY: wrongFallY }, { rotate: wrongRotate }] },
         ]}
       >
-        <Pressable onPress={() => onTap(wordId)} disabled={tapped} hitSlop={10}>
-          <Text style={[styles.text, highlighted && styles.textHighlighted]}>{word}</Text>
-        </Pressable>
+        <Text style={[styles.text, highlighted && styles.textHighlighted]}>{word}</Text>
       </Animated.View>
 
       {tapped && correct && RAY_ANGLES.map((angle, i) => (

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, SafeAreaView } from 'react-native';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 
 export default function LoadingScreen({ theme }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -58,6 +59,7 @@ export default function LoadingScreen({ theme }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: ANDROID_TOP,
   },
   inner: {
     flex: 1,

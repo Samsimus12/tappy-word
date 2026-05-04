@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, Animated, Easing } from 'react-native';
 
 const RAY_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 function FallingWord({ wordId, word, tapped, correct, highlighted, onTap, screenWidth, screenHeight, speedMultiplier = 1, bubbleColor = '#3b3b8f' }) {
-  const x = useRef(new Animated.Value(Math.random() * Math.max(0, screenWidth - 130))).current;
+  const x = useRef(new Animated.Value(Math.random() * Math.max(0, screenWidth - 150))).current;
   const y = useRef(new Animated.Value(-60)).current;
   const scale = useRef(new Animated.Value(1)).current;
   const bubbleOpacity = useRef(new Animated.Value(1)).current;
@@ -15,9 +15,14 @@ function FallingWord({ wordId, word, tapped, correct, highlighted, onTap, screen
   const tappedRef = useRef(tapped);
   useEffect(() => { tappedRef.current = tapped; }, [tapped]);
 
+  // Mirror props into refs so the recursive fall closure always reads latest values.
+  const screenWidthRef = useRef(screenWidth);
+  const screenHeightRef = useRef(screenHeight);
+  useEffect(() => { screenWidthRef.current = screenWidth; screenHeightRef.current = screenHeight; }, [screenWidth, screenHeight]);
+
   const fallAnimRef = useRef(null);
   const crumbleDir = useRef(Math.random() > 0.5 ? 1 : -1).current;
-  const bubbleSizeRef = useRef({ width: 80, height: 37 });
+  const bubbleSizeRef = useRef({ width: 150, height: 55 });
 
   const wrongRotate = wrongFallY.interpolate({
     inputRange: [0, 40],
@@ -31,14 +36,14 @@ function FallingWord({ wordId, word, tapped, correct, highlighted, onTap, screen
 
     const fall = () => {
       if (!active || tappedRef.current) return;
-      x.setValue(Math.random() * Math.max(0, screenWidth - 130));
+      x.setValue(Math.random() * Math.max(0, screenWidthRef.current - bubbleSizeRef.current.width));
       y.setValue(-60);
 
       const anim = Animated.timing(y, {
-        toValue: screenHeight + 60,
+        toValue: screenHeightRef.current + 60,
         duration: (2800 + Math.random() * 2200) / speedMultiplier,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver: false,
       });
       fallAnimRef.current = anim;
       anim.start(({ finished }) => {
@@ -113,6 +118,9 @@ function FallingWord({ wordId, word, tapped, correct, highlighted, onTap, screen
   return (
     <Animated.View
       style={{ position: 'absolute', transform: [{ translateX: x }, { translateY: y }] }}
+      hitSlop={10}
+      onStartShouldSetResponder={() => !tapped}
+      onResponderRelease={() => { if (!tapped) onTap(wordId); }}
     >
       <Animated.View
         onLayout={e => { bubbleSizeRef.current = e.nativeEvent.layout; }}
@@ -122,9 +130,7 @@ function FallingWord({ wordId, word, tapped, correct, highlighted, onTap, screen
           { transform: [{ scale }, { translateX: wrongShakeX }, { translateY: wrongFallY }, { rotate: wrongRotate }] },
         ]}
       >
-        <Pressable onPress={() => onTap(wordId)} disabled={tapped} hitSlop={10}>
-          <Text style={[styles.text, highlighted && styles.textHighlighted]}>{word}</Text>
-        </Pressable>
+        <Text style={[styles.text, highlighted && styles.textHighlighted]}>{word}</Text>
       </Animated.View>
 
       {tapped && correct && RAY_ANGLES.map((angle, i) => (

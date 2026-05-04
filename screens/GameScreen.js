@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions, SafeAreaView, Animated, Modal } from 'react-native';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 import FloatingWord from '../components/FloatingWord';
 import FallingWord from '../components/FallingWord';
 import { playSound, startMusic, stopMusic, pauseMusic, resumeMusic } from '../utils/audio';
@@ -13,8 +14,8 @@ import { showRewardedAd } from '../utils/admob';
 const { width: SW, height: SH } = Dimensions.get('window');
 const HEADER_H = 120;
 const FOOTER_H = 20;
+// Fallback only — actual bounds come from wordArea onLayout to account for safe area insets
 const WORD_AREA_H = SH - HEADER_H - FOOTER_H;
-const WORD_BOUNDS = { width: SW, height: WORD_AREA_H };
 
 const SURVIVAL_START_TIME = 30;
 
@@ -58,6 +59,7 @@ export default function GameScreen({ onGameEnd, onBack, totalScore, round, diffi
   const isSurvival = mode === 'survival';
   const isFalling = mode === 'falling';
 
+  const [wordAreaBounds, setWordAreaBounds] = useState({ width: SW, height: WORD_AREA_H });
   const [targetWord, setTargetWord] = useState('');
   const [words, setWords] = useState([]);
   const [roundScore, setRoundScore] = useState(0);
@@ -333,7 +335,11 @@ const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
         </View>
       </View>
 
-      <View style={styles.wordArea} pointerEvents={countdown !== null ? 'none' : 'box-none'}>
+      <View
+        style={styles.wordArea}
+        pointerEvents={countdown !== null ? 'none' : 'box-none'}
+        onLayout={e => setWordAreaBounds({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}
+      >
         {words.map(w => isFalling ? (
           <FallingWord
             key={w.id}
@@ -343,8 +349,8 @@ const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
             correct={w.correct}
             highlighted={w.id === highlightedId}
             onTap={handleTap}
-            screenWidth={SW}
-            screenHeight={WORD_AREA_H}
+            screenWidth={wordAreaBounds.width}
+            screenHeight={wordAreaBounds.height}
             speedMultiplier={config.speedMultiplier}
             bubbleColor={themeBubble}
           />
@@ -357,7 +363,7 @@ const foundCount = words.filter(w => w.isSynonym && w.tapped).length;
             correct={w.correct}
             highlighted={w.id === highlightedId}
             onTap={handleTap}
-            bounds={WORD_BOUNDS}
+            bounds={wordAreaBounds}
             speedMultiplier={config.speedMultiplier}
             bubbleColor={themeBubble}
           />
@@ -433,6 +439,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0f0f2e',
+    paddingTop: ANDROID_TOP,
   },
   center: {
     flex: 1,

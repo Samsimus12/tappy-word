@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { ACHIEVEMENTS } from '../constants/achievements';
+import { ANDROID_TOP } from '../utils/androidSafeTop';
 
 export default function ResultsScreen({ result, onPlayAgain, onHome, newAchievements = [], theme }) {
   const { roundScore, totalScore, targetWord, correctFound, totalSynonyms, wrongTaps, missedSynonyms, wordsSolved, mode } = result;
@@ -100,6 +101,7 @@ function StatTile({ label, value, wide, bg }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: ANDROID_TOP,
   },
   achBanner: {
     width: '100%',
