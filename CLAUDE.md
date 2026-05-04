@@ -10,7 +10,7 @@ npx expo start --clear
 ```
 - **Expo Go no longer works** — `react-native-google-mobile-ads` is a native module requiring a custom dev client
 - Use `npx expo run:ios` for local device/simulator testing
-- Or `eas build --platform ios --profile development` for a device build via EAS
+- Use `npx expo run:android` for Android emulator (requires Android Studio AVD + Java 17 + ANDROID_HOME set)
 
 **Simulator commands for App Store screenshots:**
 ```bash
@@ -20,16 +20,21 @@ npx expo run:ios --device "iPad Pro 13-inch (M5)"  # 13" — required (supportsT
 Note: flag is `--device`, not `--simulator`. Xcode only has iPhone 17 models — no iPhone 16.
 Take screenshots with `Cmd+S` in Simulator, or `xcrun simctl io booted screenshot screenshot.png`.
 
+**Android prerequisites** (one-time setup):
+- Java 17: `brew install --cask zulu@17` + `export JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home`
+- `export ANDROID_HOME=$HOME/Library/Android/sdk` + add `$ANDROID_HOME/emulator` and `$ANDROID_HOME/platform-tools` to PATH
+- Create an AVD in Android Studio → Virtual Device Manager before running
+
 ## GitHub
 https://github.com/Samsimus12/tappy-word-burst
 
 ## App identity
 - **Display name**: Tappy Word Burst
-- **Bundle ID / Android package**: `com.sammorrison.tappyword` (note: NOT tappywordburst — changed to match App Store Connect app)
+- **Bundle ID / Android package**: `com.sammorrison.tappyword` (note: NOT tappywordburst)
 - **Slug**: `tappy-word-burst`
 - **EAS project ID**: `5079b3ac-0adf-4824-868e-1f48247c525c`
 - **App Store Connect app ID**: `6764457991` (pinned in `eas.json` as `ascAppId`)
-- **Android versionCode**: `1` (first release)
+- **Android versionCode**: managed remotely by EAS (`appVersionSource: "remote"`, `autoIncrement: true`)
 - **AdMob publisher**: `ca-app-pub-7289760521218684`
 
 ## Tech stack
@@ -50,6 +55,7 @@ screens/
   RoundCompleteScreen.js        # Between rounds: scores, synonyms found, Watch Ad for hints
   ResultsScreen.js              # End screen: total score, missed synonyms, play again / back to home
   AchievementsScreen.js         # Achievement grid + theme selector
+  LoadingScreen.js              # Animated splash shown while word pool builds on startup
 components/
   FloatingWord.js               # Animated floating word bubble — accepts bubbleColor prop
   FallingWord.js                # Falling word bubble for Falling Words mode — accepts bubbleColor prop
@@ -67,9 +73,10 @@ utils/
   achievementStorage.js         # AsyncStorage wrapper for { unlockedIds, selectedTheme, modesPlayed }
   audio.js                      # expo-av audio manager: initAudio(), playSound(name), startMusic(), stopMusic(), pauseMusic(), resumeMusic()
   admob.js                      # AdMob wrapper: showRewardedAd(), preloadInterstitial(), showInterstitial()
+  androidSafeTop.js             # ANDROID_TOP constant: StatusBar.currentHeight on Android, 0 on iOS
 assets/
-  icon.png                      # 1024×1024 RGB — Tappy Word Burst branded (slightly blurry, better version planned when ChatGPT credits refresh)
-  splash-icon.png               # 688×1504 RGB — Tappy Word Burst branded, bg #0062ff (blue)
+  icon.png                      # 1024×1024 RGB — slightly blurry (upscaled); better version planned
+  splash-icon.png               # 688×1504 RGB — bg #0062ff (blue)
   sounds/                       # WAV sound effects (Success, Fail, Hint, Countdown, Go) — all capitalized
   music/                        # Menu.wav (home loop) + 4 game tracks (randomly selected per round)
 ```
@@ -113,27 +120,15 @@ All ad unit IDs are platform-specific via `Platform.OS` in `utils/admob.js`.
 | Rewarded | `/5772041359` | `/4168464429` |
 | Interstitial | `/6650234092` | `/4559346663` |
 
-**Music always pauses before any ad and resumes after** via `pauseMusic()`/`resumeMusic()` in `audio.js`. This applies to all three ad placements. `resumeMusic()` is a no-op if music is disabled.
+**Music always pauses before any ad and resumes after** via `pauseMusic()`/`resumeMusic()`. `resumeMusic()` is a no-op if music is disabled.
 
-**1. Rewarded — Hint reward** (GameScreen + RoundCompleteScreen)
-- In-game: hint button shows "Watch Ad (+3)" (purple) when hints = 0
-- Round complete screen: "Watch Ad · +3 Hints" amber outline button always visible
-- Timer freezes during the ad — `adLoading` state is included in the timer `useEffect` deps
-- Grants 3 hints via `onEarnHints(3)` on success
+**1. Rewarded — Hint reward** (GameScreen + RoundCompleteScreen): hint button shows "Watch Ad (+3)" when hints = 0; timer freezes during ad (`adLoading` in timer useEffect deps); grants 3 hints on success.
 
-**2. Rewarded — Second Chance** (GameScreen)
-- When timer hits 0: if second chance not yet used this game, show modal instead of ending
-- Player watches ad to continue with +15 seconds, or taps "No thanks" to end normally
-- One per game session — `secondChanceUsedRef` in `App.js` resets on Back/Play Again
+**2. Rewarded — Second Chance** (GameScreen): when timer hits 0 and second chance not yet used, shows modal to watch ad for +15s. One per game — `secondChanceUsedRef` in `App.js` resets on Back/Play Again.
 
-**3. Interstitial — Between rounds** (App.js `handleContinue`)
-- Shows randomly every 3–6 rounds (`nextAdRoundRef` tracks threshold)
-- Skipped if player watched a rewarded ad that round (`watchedRewardedAdRef`)
-- Music stopped before interstitial; new GameScreen's `startMusic()` restarts it naturally
+**3. Interstitial — Between rounds** (App.js `handleContinue`): shows randomly every 3–6 rounds; skipped if rewarded ad watched that round (`watchedRewardedAdRef`).
 
 **Dev mode**: all ads use `TestIds.REWARDED` / `TestIds.INTERSTITIAL` automatically via `__DEV__`
-
-**AdMob status**: App linked to AdMob, ad units active. Test ads confirmed working in simulator. When ads fail to load in production, `showRewardedAd()` resolves `false` silently.
 
 ## Hints
 - Players start with 10 hints, persisted via AsyncStorage
@@ -142,44 +137,56 @@ All ad unit IDs are platform-specific via `Platform.OS` in `utils/admob.js`.
 - Earned via rewarded ads (+3 per ad) from GameScreen or RoundCompleteScreen
 
 ## Audio
-`initAudio()` called on app startup. Uses `Promise.allSettled` so one bad file doesn't kill all audio. SFX uses `setPositionAsync(0)` + `playAsync()` (not `replayAsync()`) for reliability. Game music randomly picks from 4 tracks; `gameMusicActive` flag prevents restarts between rounds. `pauseMusic()`/`resumeMusic()` pause and resume the current track without unloading it. Simulator audio is unreliable — test music on a physical device.
+`initAudio()` called on app startup. Uses `Promise.allSettled` so one bad file doesn't kill all audio. SFX uses `setPositionAsync(0)` + `playAsync()` (not `replayAsync()`) for reliability. Game music randomly picks from 4 tracks; `gameMusicActive` flag prevents restarts between rounds. `pauseMusic()`/`resumeMusic()` pause and resume without unloading. Simulator audio is unreliable — test music on a physical device.
 
 ## Key technical notes
-- **Animated API**: Use React Native's built-in `Animated`, NOT Reanimated (crashes with this Expo config)
-- **Recursive animation**: FloatingBackground uses recursive `Animated.timing` callbacks, NOT `Animated.loop` — loop caused visible position snaps
-- **Screen state bug (fixed)**: `const [screen, setScreen]` MUST be declared before any `useEffect` that references it
-- **FallingWord recycling**: Handled internally via `tappedRef` to sync animation callbacks with React state
+
+### Animation & touch (critical)
+- **Use `Animated`, NOT Reanimated** — Reanimated causes "Exception in HostFunction" crashes with this Expo config
+- **FloatingWord / FallingWord position animations use `useNativeDriver: false`** — this is intentional. Native driver moves the visual but NOT the touch hitbox on Android, making bubbles untappable. JS driver is slightly less smooth but correct. Tap-feedback animations (scale, opacity, shake) still use `useNativeDriver: true`.
+- **Touch handled via responder API on the outer `Animated.View`** (`onStartShouldSetResponder` + `onResponderRelease`) — NOT a nested `Pressable`. Pressable inside animated views compounds the hitbox problem on Android.
+- **FloatingWord uses recursive animation** (not `Animated.loop`) — each move picks a new target using `boundsRef.current` and `bubbleSizeRef.current` (actual layout size from `onLayout`) to keep bubbles in-bounds. `Animated.loop` with fixed targets caused position snaps and off-screen drift.
+- **GameScreen passes real `wordAreaBounds`** (measured via `onLayout` on the wordArea View) as `bounds` to FloatingWord and `screenWidth/Height` to FallingWord — NOT hardcoded from `Dimensions`. This accounts for safe area insets that make the rendered area smaller than `Dimensions.get('window')`.
+
+### Android edge-to-edge
+- `app.json` has `"edgeToEdgeEnabled": true` for Android, which draws the app behind the status bar
+- React Native's built-in `SafeAreaView` does NOT compensate for this on Android
+- All screens import `ANDROID_TOP` from `utils/androidSafeTop.js` and apply it as `paddingTop` on their container style
+- `ANDROID_TOP = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0`
+
+### Other gotchas
+- **FallingWord recycling**: handled internally via `tappedRef` to sync animation callbacks with React state
 - **fallbackSynonyms.js** only covers the original ~58 BASE_WORDS — the 98 newer BASE_WORDS rely on Datamuse
-- **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` actually works
-- **Sound file casing**: All sound files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
+- **ScrollView centering**: RoundCompleteScreen uses `flexGrow: 1` on `contentContainerStyle` so `justifyContent: 'center'` works
+- **Sound file casing**: All files in `assets/sounds/` use capitalized names (Success.wav, Fail.wav, Hint.wav) — must match exactly or EAS build fails on Linux
 
-## App Store status
-- **v2.0.0 submitted for review** (as of 2026-04-30)
-- Bundle ID is `com.sammorrison.tappyword` (App Store Connect app ID `6764457991`)
-- Submit future builds with: `eas build --platform ios --profile production` then `eas submit --platform ios --latest`
-- Screenshots already taken and uploaded
-- **app-ads.txt** hosted at `https://samsimus12.github.io/app-ads.txt` via the `samsimus12.github.io` GitHub Pages repo
+## Deploying
 
-## Still needed
-- Replace `assets/icon.png` with a higher-resolution version (current one is slightly blurry — upscaled from low-res source; new ChatGPT-generated image needed)
-- **TODO (next release)**: Update Support URL and Marketing URL in App Store Connect to `https://samsimus12.github.io` — these fields can only be changed when submitting a new app version
+### iOS
+```bash
+eas build --platform ios --profile production
+eas submit --platform ios --latest
+```
+- **v2.0.1 is live on App Store** (submitted 2026-04-30)
+- `eas.json` `submit.production.ios.ascAppId` = `"6764457991"`
 
-## Android / Google Play — in progress
-Android config is ready (`package`, `versionCode`, AdMob IDs all set in `app.json`). Blocked on Google Play developer account setup:
-1. ✅ Account created, $25 fee paid
-2. ⏳ Identity verification (government ID upload — takes hours to days)
-3. ⏳ Android device verification (requires Google Play Console app on a real Android device)
-4. ⏳ Contact number verification (SMS)
-
-Once all three are verified, the steps to ship Android are:
+### Android
 ```bash
 eas build --platform android --profile production
 eas submit --platform android --latest
 ```
-Then create the app listing in Google Play Console and complete store metadata (description, screenshots, content rating, etc.).
+- **Google Play internal testing track is active** — builds go live to testers within ~2 hours
+- Google service account key is already configured in EAS — `eas submit` works without extra setup
+- Testers must opt in once via the internal testing link in Play Console; after that, updates are automatic
+- **app-ads.txt** hosted at `https://samsimus12.github.io/app-ads.txt`
+
+## Still needed
+- Replace `assets/icon.png` with a sharper version (current is slightly blurry — upscaled from low-res source)
+- Update Support URL and Marketing URL in App Store Connect to `https://samsimus12.github.io` — can only be changed when submitting a new version
+- Animation smoothness on Android: `useNativeDriver: false` for position animations may look choppy on low-end devices. If it's a problem on real hardware (not just emulator), consider a parent-level touch handler in GameScreen that tracks positions via `addListener` and restores native driver.
 
 ## Ideas / future features
-- **Rocket power-up**: destroys all remaining synonym bubbles on screen at once. Earned ~1 per 1000 points scored. Rare and satisfying — not purchasable, purely score-gated.
+- **Rocket power-up**: destroys all remaining synonym bubbles at once. Earned ~1 per 1000 points scored — rare, satisfying, not purchasable.
 - No persistent high score yet (AsyncStorage addition would be straightforward)
 - No haptics yet (`expo-haptics` would pair well with tap sounds)
 - Datamuse occasionally returns 0 synonyms — fallback covers original BASE_WORDS only
